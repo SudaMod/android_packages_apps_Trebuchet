@@ -41,6 +41,13 @@ import java.io.InputStream;
 
 public class BitmapCropTask extends AsyncTask<Void, Void, Boolean> {
 
+
+    public static final int EDIT_DESKTOP_WALLPAER = 0;
+    public static final int EDIT_LOCK_WALLPAER = 1;
+    public static final int EDIT_ALL_WALLPAER = 2;
+
+    private static int EDIT_TYPE = BitmapCropTask.EDIT_ALL_WALLPAER;
+
     public interface OnBitmapCroppedHandler {
         public void onBitmapCropped(byte[] imageBytes);
     }
@@ -182,10 +189,10 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Boolean> {
             try {
                 InputStream is = regenerateInputStream();
                 if (is != null) {
-                    wallpaperManager.setStream(is);
+                    setWallPaper(wallpaperManager, is);
                     Utils.closeSilently(is);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 Log.w(LOGTAG, "cannot write stream to wallpaper", e);
                 failure = true;
             }
@@ -374,11 +381,11 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Boolean> {
                 if (mSetWallpaper && wallpaperManager != null) {
                     try {
                         byte[] outByteArray = tmpOut.toByteArray();
-                        wallpaperManager.setStream(new ByteArrayInputStream(outByteArray));
+                        setWallPaper(wallpaperManager, new ByteArrayInputStream(outByteArray));
                         if (mOnBitmapCroppedHandler != null) {
                             mOnBitmapCroppedHandler.onBitmapCropped(outByteArray);
                         }
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         Log.w(LOGTAG, "cannot write stream to wallpaper", e);
                         failure = true;
                     }
@@ -402,4 +409,26 @@ public class BitmapCropTask extends AsyncTask<Void, Void, Boolean> {
             mOnEndRunnable.run();
         }
     }
+ 
+    public void setWallPaper(WallpaperManager wallpaperManager, InputStream is) {
+        try {
+            if(EDIT_TYPE == EDIT_DESKTOP_WALLPAER) {
+                wallpaperManager.setStream(is);
+            } else if (EDIT_TYPE == EDIT_LOCK_WALLPAER) {
+                wallpaperManager.clearKeyguardWallpaper();
+                wallpaperManager.setKeyguardStream(is);
+            } else if (EDIT_TYPE == EDIT_ALL_WALLPAER) {
+                wallpaperManager.clearKeyguardWallpaper();
+                wallpaperManager.setStream(is);
+            }
+        } catch (Exception e) {
+
+        }
+    }
+
+    public static void setEditType(int editType) {
+        EDIT_TYPE = editType;
+    }
+
+
 }

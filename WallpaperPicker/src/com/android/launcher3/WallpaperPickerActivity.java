@@ -21,12 +21,14 @@ import android.animation.LayoutTransition;
 import android.annotation.TargetApi;
 import android.app.ActionBar;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.WallpaperManager;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.Resources;
+import android.content.DialogInterface;
 import android.database.Cursor;
 import android.database.DataSetObserver;
 import android.graphics.Bitmap;
@@ -553,11 +555,19 @@ public class WallpaperPickerActivity extends WallpaperCropActivity {
                         // Ensure that a tile is slelected and loaded.
                         if (mSelectedTile != null && mCropView.getTileSource() != null) {
                             // Prevent user from selecting any new tile.
-                            mWallpaperStrip.setVisibility(View.GONE);
-                            actionBar.hide();
-
-                            WallpaperTileInfo info = (WallpaperTileInfo) mSelectedTile.getTag();
-                            info.onSave(WallpaperPickerActivity.this);
+                            AlertDialog.Builder builder = new AlertDialog.Builder(WallpaperPickerActivity.this);
+                            final String[] opts = getResources().getStringArray(R.array.wallpaper_edit_title);
+                            builder.setItems(opts, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    BitmapCropTask.setEditType(which);
+                                    mWallpaperStrip.setVisibility(View.GONE);
+                                    actionBar.hide();
+                                    WallpaperTileInfo info = (WallpaperTileInfo) mSelectedTile.getTag();
+                                    info.onSave(WallpaperPickerActivity.this);
+                                }
+                            });
+                            builder.show();
                         } else {
                             // no tile was selected, so we just finish the activity and go back
                             setResult(Activity.RESULT_OK);
